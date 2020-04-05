@@ -1,0 +1,175 @@
+package com.example.demo;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import ch.qos.logback.classic.net.SyslogAppender;
+
+
+public class Streams {
+
+	public static void main(String[] args) {
+		//SpringApplication.run(DemoApplication.class, args);
+		
+		
+		List<Integer> intList = new ArrayList<>();
+		List<Person> list = new ArrayList<>();
+		List<Person> list1 = new ArrayList<>();
+		
+		List<List<Person>> mainList = new ArrayList<>();
+				
+		
+		Person p1 = new Person();
+		p1.setAbc(123);
+		p1.setfName("fName");
+		p1.setLastName("lName");
+
+		Person p2 = new Person();
+		p2.setAbc(123);
+		p2.setfName("fName");
+		p2.setLastName("alName1");
+	
+		Person p3 = new Person();
+		p3.setAbc(123);
+		p3.setfName("fName");
+		p3.setLastName("alName11");
+	
+		list.add(p1);list.add(p2);list.add(p3);
+		
+		
+		//Using map of streams to modfiy list and collect a new list of string
+		ArrayList<String> listCaps = (ArrayList<String>) list.stream().map(e->e.getLastName().toUpperCase()).collect(Collectors.toList());		
+		System.out.println("Modify to all caps :" + listCaps);
+		
+		ArrayList<String> listCapss = new ArrayList() {{add("abcd");add("abcd");add("abc");}};
+
+		ArrayList<String> listCapsss= new ArrayList() {{add("ab cd12 erer");add("abc dr");add("ab c");}};
+		
+		long countl=1l;
+		 Map<String,Long > mapp = new HashMap();
+		    
+		 for(String s : listCapsss){
+		        
+	          countl = listCapss.stream().filter(e->e.contains(s)).count();
+	        
+	          mapp.put(s,countl);
+	        
+	        
+	        }
+		
+		 ArrayList<String>  listy= (ArrayList<String>) mapp.entrySet().stream().sorted(Comparator.comparing(Map.Entry::getValue,Comparator.reverseOrder())).map(Map.Entry::getKey).collect(Collectors.toList());
+		
+		 
+		 ArrayList<String>  listyu= new ArrayList<>();
+		 
+		 
+		 listyu=  (ArrayList<String>) listCapsss.stream().map(e->e.substring(e.indexOf(" "),e.length())).sorted().collect(Collectors.toList());
+		 listyu = (ArrayList<String>)listyu.stream().sorted().collect(Collectors.toList());
+		 
+		 
+		 System.out.println("rrrrrr" + listyu);
+		 
+		/* for(String s : listCapsss) {
+			 
+			s= s.substring(s.indexOf(" "),s.length());
+			 System.out.println("ssss  "+s);
+			 
+		 }*/
+		
+		//System.out.println("main imp" + llk);
+		//Modify a list
+		list.stream().forEach(e->{e.setLastName(e.getLastName().toUpperCase());e.setfName(e.getfName().toUpperCase());});
+	    System.out.print("Printing modified list: ");
+		list.stream().forEach(s->System.out.print(s.getLastName()+"  "+s.getfName()+" ,"));
+		
+		//using sorted
+		list = list.stream().sorted((e1,e2)->e1.getLastName().compareTo(e2.getLastName())).collect(Collectors.toList());
+		System.out.println("--");
+		list.stream().forEach(s->System.out.print(s.getLastName()+"  "+s.getfName()+" ,"));
+		
+		intList.add(1);
+		intList.add(2);
+		intList.add(3);
+		intList.add(1);
+		intList.add(1);
+		intList.add(1);
+		
+		//disticnt
+		List<Integer> l =  (List<Integer>) intList.stream().distinct().collect(Collectors.toList());
+		System.out.println("    "+l);
+		
+		
+		//distinct by key
+		List<Person> lo = list.parallelStream().filter(distincyByKey(e->e.getLastName())).collect(Collectors.toList());
+		 lo.forEach(e->System.out.println(e.getLastName()+ "distinctbykey"));
+		
+		
+		//min
+		Optional<Integer> ll= (Optional<Integer>) intList.stream().min((e1,e2)->e1.compareTo(e2));
+		System.out.println(ll);
+		
+
+		//max
+		Optional<Integer> lll= (Optional<Integer>) intList.stream().max((e1,e2)->e1.compareTo(e2));
+		System.out.println(lll.get());
+
+		//allmatch anymatch nonematch
+		boolean allEven = intList.stream().allMatch(i -> i % 2 == 0);
+	    boolean oneEven = intList.stream().anyMatch(i -> i % 2 == 0);
+	    boolean noneMultipleOfThree = intList.stream().noneMatch(i -> i % 3 == 0);
+
+		//average
+	    OptionalDouble avg = intList.stream().mapToDouble(e->e.doubleValue()).average();
+		System.out.println(avg.getAsDouble());
+		//reduce
+		OptionalDouble sum = intList.stream().mapToDouble(e->e.doubleValue()).reduce(Double::sum);
+		System.out.println(sum);
+		
+		//joining
+		String joined = list.stream().map(e->e.getfName()).collect(Collectors.joining(","));
+		System.out.println("joined "+ joined);
+		
+		//partitioningBy
+		Map<Boolean, List<Integer>> b = intList.stream().collect(Collectors.partitioningBy(i->i%2==0));
+		System.out.println("even size "+b.get(true).size());
+		System.out.println("even size "+b.get(false).size());
+		
+		
+		//intList.stream().collect(Collectors.pa)
+		
+		//groupingby
+		//list.stream().collect(Collectors.groupingBy(e->e.))
+		
+		//flatmap
+		Map<String, String>map = list.stream().filter(p->p.getLastName().equals("lName1")).collect(Collectors.toMap(Person::getfName, Person :: getLastName, (o,e)->o));
+		System.out.println(map);
+		mainList.add(list);mainList.add(list1);
+		mainList
+		  .stream()
+		  .flatMap(e->e.stream())
+		  .collect(Collectors.toList());
+		//	list.stream().collect(()->new ArrayList<>(), (listNew, element)->listNew., combiner)
+		
+	}
+	
+	public static <T> Predicate<T> distincyByKey(Function<? super T, ?> keyExtractor) {
+		Set<Object> seen = new HashSet<>();
+	    return t -> seen.add(keyExtractor.apply(t));
+	}
+
+}
